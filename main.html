@@ -1,0 +1,297 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>[Smart-Aptiv] E-AHP DX Portal Platform</title>
+    <style>
+        /* 1. 디자인 시스템 초기화 및 다크 테마 고유 스펙 */
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', 'Malgun Gothic', sans-serif; }
+        body { background-color: #070a13; color: #f1f5f9; height: 100vh; overflow: hidden; display: flex; flex-direction: column; justify-content: space-between; }
+        
+        /* 주황색 테크노 그물망 배경 레이어 */
+        .grid-bg { 
+            position: absolute; inset: 0; 
+            background-image: radial-gradient(#ff5500 0.5px, transparent 0.5px); 
+            background-size: 35px 35px; opacity: 0.12; pointer-events: none; z-index: 0;
+        }
+
+        /* 2. 상단 헤더 영역 */
+        header {
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 15px 40px; background-color: #0f1422; border-bottom: 1px solid #1e293b; position: relative; z-index: 10;
+        }
+        .brand-logo { color: #ff3b30; font-size: 28px; font-weight: 900; letter-spacing: 3px; text-shadow: 0 0 12px rgba(255,59,48,0.4); }
+        .slogan { font-size: 16px; font-weight: bold; color: #94a3b8; }
+        .status-badge { background-color: #ff3b30; color: white; padding: 5px 14px; border-radius: 20px; font-size: 11px; font-weight: bold; letter-spacing: 1px; }
+
+        /* 3. 메인 레이아웃 구역 */
+        .main-container { display: flex; flex: 1; position: relative; z-index: 5; overflow: hidden; }
+
+        /* [좌측] 거대 반원형 HUD 패널 (유리창 Glassmorphism 효과) */
+        aside {
+            width: 380px; height: 100%;
+            background: linear-gradient(180deg, rgba(17, 24, 39, 0.85) 0%, rgba(11, 15, 25, 0.9) 100%);
+            border-radius: 0 450px 450px 0; border-right: 1px solid rgba(255,255,255,0.08);
+            padding: 50px 35px; backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+            display: flex; flex-direction: column; justify-content: center;
+        }
+        
+        /* 스크롤 가능한 내비게이션 메뉴 리스트 */
+        .menu-list { display: flex; flex-direction: column; gap: 7px; overflow-y: auto; max-height: 85vh; padding-right: 5px; width: 100%; }
+        .menu-list::-webkit-scrollbar { width: 4px; }
+        .menu-list::-webkit-scrollbar-thumb { background: #1e293b; border-radius: 10px; }
+        
+        .menu-btn {
+            background-color: rgba(20, 27, 45, 0.5); border: 1px solid rgba(255,255,255,0.05);
+            color: #94a3b8; padding: 12px 16px; border-radius: 14px; text-align: left;
+            font-size: 13px; cursor: pointer; transition: all 0.25s ease; display: flex; align-items: center; gap: 10px;
+        }
+        .menu-btn:hover { border-color: #38bdf8; color: white; background-color: rgba(56, 189, 248, 0.05); }
+        .menu-btn.active {
+            background: linear-gradient(90deg, #ff3b30 0%, #dd2c22 100%);
+            color: white; border-color: #ff3b30; font-weight: bold;
+            transform: scale(1.02); box-shadow: 0 4px 15px rgba(255, 59, 48, 0.3);
+        }
+
+        /* 4. 컨텐츠 배치 시스템 */
+        main { flex: 1; padding: 40px; display: flex; position: relative; gap: 30px; }
+        
+        /* [중앙 배치] 슬라이드 상세 내용 기입 데이터 보드판 */
+        .info-board {
+            flex: 1.1; display: flex; flex-direction: column; justify-content: flex-start;
+            background: rgba(11, 15, 25, 0.85); border: 1px solid rgba(255,255,255,0.08);
+            border-radius: 24px; padding: 40px; backdrop-filter: blur(10px);
+        }
+        .info-header span { font-size: 11px; font-weight: bold; color: #ff3b30; tracking: 2px; text-transform: uppercase; }
+        .info-header h3 { font-size: 24px; font-weight: 900; color: white; margin-top: 5px; line-height: 1.3; border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 15px; }
+        .info-body { margin-top: 25px; font-size: 14.5px; color: #94a3b8; line-height: 1.7; flex: 1; overflow-y: auto; }
+        
+        /* 보고서 전용 리스트 템플릿 */
+        .info-body ul { list-style: none; margin-top: 5px; }
+        .info-body li { margin-bottom: 16px; position: relative; padding-left: 22px; color: #e2e8f0; }
+        .info-body li::before { content: "■"; position: absolute; left: 0; color: #38bdf8; font-size: 10px; top: 4px; }
+        .info-body b { color: #38bdf8; }
+
+        /* [우측 배치] 대형 설비 이미지 및 핵심 요약 액자 프레임 */
+        .content-frame {
+            flex: 0.9; background: rgba(15, 20, 34, 0.4); border: 1px solid rgba(255,255,255,0.05);
+            border-radius: 24px; overflow: hidden; display: flex; flex-direction: column; justify-content: center; align-items: center;
+            position: relative; box-shadow: inset 0 0 30px rgba(0,0,0,0.5); padding: 20px;
+        }
+        .content-frame img { max-width: 95%; max-height: 75%; object-fit: contain; border-radius: 12px; transition: all 0.5s ease; }
+        
+        /* 우측 프레임 내부 하단 핵심 요약 영역 */
+        .center-summary {
+            width: 95%; margin-top: 15px; padding: 15px 20px; background: rgba(7, 10, 19, 0.6); 
+            border: 1px dashed rgba(56, 189, 248, 0.3); border-radius: 14px; text-align: center;
+        }
+        .center-summary p { font-size: 13px; color: #38bdf8; font-weight: bold; letter-spacing: 0.5px; }
+        
+        /* 라이브 노드 펄스 배지 */
+        .live-badge {
+            position: absolute; top: 20px; left: 20px; display: flex; align-items: center; gap: 8px;
+            background: rgba(0,0,0,0.6); padding: 6px 14px; border-radius: 20px; border: 1px solid rgba(255,255,255,0.1);
+        }
+        .pulse-dot { width: 8px; height: 8px; background-color: #10b981; border-radius: 50%; animation: pulse 2s infinite; }
+
+        /* 5. 하단 버튼 바 */
+        footer {
+            padding: 15px 40px; background-color: #0f1422; border-top: 1px solid #1e293b;
+            display: flex; justify-content: space-between; align-items: center; position: relative; z-10;
+        }
+        .fav-group { display: flex; gap: 10px; }
+        .fav-btn {
+            background-color: #141b2d; border: 1px solid #1e293b; color: #64748b;
+            padding: 8px 16px; border-radius: 10px; font-size: 12px; font-weight: bold; cursor: pointer; transition: 0.2s;
+        }
+        .fav-btn:hover { color: white; background-color: #1f293d; border-color: #4b5563; }
+
+        @keyframes pulse { 0% { opacity: 0.4; } 50% { opacity: 1; } 100% { opacity: 0.4; } }
+    </style>
+</head>
+<body>
+
+    <div class="grid-bg"></div>
+
+    <header>
+        <div class="brand-logo">APTIV</div>
+        <div class="slogan">Aptiv on TOP 🔑 👥 🏆</div>
+        <div style="text-align: right;">
+            <span class="status-badge">PLANT_FLOWS</span>
+            <div style="font-size: 11px; color: #4b5563; margin-top: 5px; font-family: monospace;">2026.06.12 / 금 <b>09:32</b></div>
+        </div>
+    </header>
+
+    <div class="main-container">
+        <aside>
+            <div class="menu-list">
+                <button class="menu-btn active" onclick="switchSlide(1)"><span>01</span> 표지 (Title)</button>
+                <button class="menu-btn" onclick="switchSlide(2)"><span>02</span> 디지털 사각지대 (Background)</button>
+                <button class="menu-btn" onclick="switchSlide(3)"><span>03</span> 3대 Pain Point 분석 (Root Cause)</button>
+                <button class="menu-btn" onclick="switchSlide(4)"><span>04</span> 타겟 설비 실태 조사 (Target)</button>
+                <button class="menu-btn" onclick="switchSlide(5)"><span>05</span> 모바일 DX 실행 콘셉트 (Concept)</button>
+                <button class="menu-btn" onclick="switchSlide(6)"><span>06</span> AI-Powered 스마트 기능 (Features)</button>
+                <button class="menu-btn" onclick="switchSlide(7)"><span>07</span> 데이터 동기화 혁신 (Feasibility)</button>
+                <button class="menu-btn" onclick="switchSlide(8)"><span>08</span> 정량/정성 기대효과 (Benefits)</button>
+                <button class="menu-btn" onclick="switchSlide(9)"><span>09</span> 비즈니스 품질 임팩트 (Metrics)</button>
+                <button class="menu-btn" onclick="switchSlide(10)"><span>10</span> 향후 전개 로드맵 (Timeline)</button>
+                <button class="menu-btn" onclick="switchSlide(11)"><span>11</span> 부문 혼합 팀워크 리포트 (Collaboration)</button>
+                <button class="menu-btn" onclick="switchSlide(12)"><span>12</span> 최종 결론 및 제언 (Conclusion)</button>
+            </div>
+        </aside>
+
+        <main>
+            <div class="info-board">
+                <div class="info-header">
+                    <span id="slide-category">Loading...</span>
+                    <h3 id="slide-title">Loading...</h3>
+                </div>
+                
+                <div class="info-body" id="slide-content">
+                    보고서의 상세 내용을 기입하는 구역입니다.
+                </div>
+            </div>
+
+            <div class="content-frame">
+                <img id="equipment-image" src="Press.png" alt="Aptiv Core Equipment Asset" onerror="this.src='data:image/svg+xml;utf8,<svg xmlns=\'http://www.w3.org/2000/svg\' width=\'100\' height=\'100\'><rect width=\'100\' height=\'100\' fill=\'%23090d16\'/><text x=\'50%\' y=\'50%\' dominant-baseline=\'middle\' text-anchor=\'middle\' fill=\'%231f2937\' font-family=\'monospace\' font-size=\'10\'>[IMAGE PLACEHOLDER]</text></svg>'">
+                
+                <div class="center-summary">
+                    <p id="center-summary-text">Smart-Aptiv DX PoC 통합 구동 서버 활성화</p>
+                </div>
+
+                <div class="live-badge">
+                    <div class="pulse-dot"></div>
+                    <span id="live-node-text" style="font-size: 10px; font-family: monospace; color: #10b981; font-weight: bold; tracking: 1px;">SYSTEM_LIVE</span>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <footer>
+        <div class="fav-group">
+            <button class="fav-btn">★ FAV_1</button>
+            <button class="fav-btn">★ FAV_2</button>
+            <button class="fav-btn">★ FAV_3</button>
+            <button class="fav-btn">★ FAV_4</button>
+        </div>
+        <div style="font-size: 11px; font-family: monospace; color: #4b5563;">
+            Powered by <span style="color: #ff3b30; font-weight: 900; tracking: 1px;">Crew EX</span>
+        </div>
+    </footer>
+
+    <script>
+        // PPT 12장 전체 시나리오 데이터베이스 동일하게 유지
+        const slideDatabase = {
+            1: {
+                category: "I. 문제 정의 (Problem Definition) — 배점 25%",
+                title: "현장 중심 모바일 DX를 통한 생산 정보 접근성 혁신 및 스마트 가이드",
+                summary: "Smart-Aptiv DX PoC 통합 구동 서버 활성화",
+                content: "<ul><li><b>프로젝트 정의:</b> 디지털 자각지대에 놓인 현장 작업 표준의 모바일 이식 및 실시간 안전 연동</li><li><b>수행 주체:</b> 엔지니어링의 기술 분석과 HR/EHS 부문의 현장 소통 프로세스가 결합된 전사 시너지 조별 과제</li><li><b>핵심 산출물:</b> 단기 구축형 PoC 통합 웹/앱 대시보드 인프라 표준안 제안</li></ul>",
+                badge: "SLIDE_01: PROJECT_LAUNCH"
+            },
+            2: {
+                category: "I. 문제 정의 (Problem Definition) — 배점 25%",
+                title: "현장 정보 파편화 및 디지털 사각지대 실태 (Background)",
+                summary: "현장 실태: 업데이트가 누락되어 방치된 키오스크 및 공지 보드판",
+                content: "<ul><li><b>키오스크 방치 실태:</b> 사양 변경 주기 대비 긴 패치 주기로 인해 정보가 누락되거나 시스템 기능이 사실상 단절됨</li><li><b>게시판 정보 과포화:</b> 로비 및 복도 게시판에 빽빽하게 인쇄 부착된 EHS 안전 수칙과 도면 가이드가 실제 작업 공간에서 식별되지 않음</li><li><b>결과적 한계:</b> 작업자가 필요한 즉시 올바른 치수나 긴급 대처 가이드에 접근할 수 없어 휴먼 에러 발생 가능성 상존</li></ul>",
+                badge: "SLIDE_02: REAL_FIELD_ISSUE"
+            },
+            3: {
+                category: "II. 원인 분석 (Root Cause Analysis) — 배점 25%",
+                title: "현장 정보 접근의 3대 핵심 Pain Point 원인 분석 (Root Cause)",
+                summary: "원인 규명: 공간적 한계, 동기화 프로세스 부재, 직관성 결여",
+                content: "<ul><li><b>접근성(Accessibility):</b> 유선 고정형 하드웨어(키오스크/공지 보드판)가 가진 공간적 종속성의 한계</li><li><b>적시성(Agility):</b> 도면 변경이나 긴급 공지 배포 시, 관리자-작업자 간 실시간 데이터 동기화 파이프라인의 부재</li><li><b>이해도(Context):</b> 방대한 줄글 위주의 매뉴얼 구조로 인해 차종별 미래 아키텍처(SDV, Zonal) 적용사례 연계 인지 저하</li></ul>",
+                badge: "SLIDE_03: PAIN_POINT_TREE"
+            },
+            4: {
+                category: "II. 원인 분석 (Root Cause Analysis) — 배점 25%",
+                title: "타겟 설비 선정 및 현장 인과관계 인포그래픽 (Target Node)",
+                summary: "대상 공정: 프레스 설비(Press.png) 및 고전압 커넥터 어셈블리",
+                content: "<ul><li><b>대상 공정 지정:</b> 고중량 가동 프레스(Press) 라인 및 핵심 고전압 커넥터 어셈블리 공정을 분석 대상 노드로 지정</li><li><b>인과관계 추적:</b> 표준 가이드북 탐색에 소요되는 분 단위의 지연이 공정 트러블슈팅 지연 및 리워크 비용 손실로 직결됨을 증명</li><li><b>현장 인터뷰:</b> 초 단위의 직관적인 정보 획득 인프라 유무가 설비 종합 효율(OEE) 및 현장 EHS 안전 확보의 핵심 통제 변수임 확인</li></ul>",
+                badge: "SLIDE_04: METRIC_MAPPING"
+            },
+            5: {
+                category: "III. 개선안 도출: Smart-Aptiv PoC — 배점 25%",
+                title: "솔루션 콘셉트: 현장 친화적 모바일 DX 실행 툴 (Concept)",
+                summary: "솔루션 방향: 휴대용 모바일 기기로의 패러다임 전환",
+                content: "<ul><li><b>패러다임의 전환:</b> 거대하고 무거운 고정형 설비 모니터 중심에서 개별 휴대용 모바일 기기(태블릿/스마트폰)로 전개</li><li><b>Context-Aware 메커니즘:</b> 설비 및 공간 위치별로 고유 코딩된 식별 QR 코드 하드웨어 전면 부착</li><li><b>직관적 1초 접근:</b> 작업자가 현장에서 스마트폰으로 스캔하는 즉시 해당 설비에 바인딩된 정보 스크린으로 자동 라우팅</li></ul>",
+                badge: "SLIDE_05: PROTO_CONCEPT"
+            },
+            6: {
+                category: "III. 개선안 도출: Smart-Aptiv PoC — 배점 25%",
+                title: "AI-Powered 스마트 가이드 주요 핵심 기능 구성 (Features)",
+                summary: "기능 연동: 최신 작업표준서 리포트 및 AI RAG 가이드 엔진",
+                content: "<ul><li><b>생산 및 품질 관리:</b> 설비별 실시간 최신 작업표준서, 고전압 커넥터 부품 제원 및 조립 주의사항 통합 팝업</li><li><b>안전 및 EHS 시스템:</b> 공간 맞춤형 위험 구역 경고, 비상 대처 가이드라인, 안전 관리자 원클릭 긴급 연락망 연동</li><li><b>AI 가이드 챗봇(RAG):</b> 방대한 양의 사내 품질 매뉴얼에서 자연어 질의를 통해 원하는 조치 프로세스를 실시간 요약·답변</li></ul>",
+                badge: "SLIDE_06: ARCHITECTURE"
+            },
+            7: {
+                category: "III. 개선안 도출: Smart-Aptiv PoC — 배점 25%",
+                title: "시스템 아키텍처 및 업데이트 혁신성 (Feasibility)",
+                summary: "실행 가치: 구글 시트 기반 노코드 동기화 및 Python 자동화 파이프라인",
+                content: "<ul><li><b>노코드 클라우드 동기화:</b> 관리자(엔지니어링, HR, EHS)가 구글 시트에서 데이터를 수정하면 현장 태블릿에 실시간 반영</li><li><b>Python 자동화 파이프라인:</b> 조장님이 평소 구축해 둔 파이썬 자동화 툴(Budget, SAR Tracking) 연동을 통한 인프라 확장성 제시</li><li><b>높은 실행 가능성(15%):</b> 대규모 하드웨어 추가 투자비 없이 오픈소스(Streamlit/AppSheet) 기반으로 즉시 현장 배포가 가능한 고효율성 입증</li></ul>",
+                badge: "SLIDE_07: FEASIBILITY_OK"
+            },
+            8: {
+                category: "IV. 기대효과 및 비즈니스 기여도 — 배점 25%",
+                title: "정량적 · 정성적 기대효과 포트폴리오 (Expected Benefits)",
+                summary: "기대 성과: 정보 검색 시간 초 단위 단축 및 전사 DX 표준 선점",
+                content: "<ul><li><b>정량적 기대효과:</b> 도면 및 표준서 검색 소요시간 분 단위에서 '초 단위' 단축, 페이퍼리스화를 통한 공정 인쇄/보수 비용 대폭 절감</li><li><b>정성적 기대효과:</b> 실시간 동기화를 통한 휴먼 에러 차단으로 공정 신뢰도 향상, 작업자 중심의 자율적 안전문화 정착</li><li><b>선도 이미지 확보:</b> CS Korea 사업장 전반의 디지털 트랜스포메이션(DX) 모범 우수 사례 가치 선점</li></ul>",
+                badge: "SLIDE_08: VALUE_CREATION"
+            },
+            9: {
+                category: "IV. 기대효과 및 비즈니스 기여도 — 배점 25%",
+                title: "품질(Quality) 및 실질 비즈니스 임팩트 (Metrics)",
+                summary: "화폐 가치 산정: 조립 불량률 감소 및 대량 폐기 예산 원천 방어",
+                content: "<ul><li><b>조립 불량률 감소:</b> 최신 버전의 공정 리브(Rib) 폭 및 가이드라인 오적용 리스크를 원천 제거하여 조립 무결성 달성</li><li><b>리워크 비용 예방:</b> 설계 변경 히스토리의 현장 즉시 전파를 통해 사양 미준수로 발생하는 대량 불량 폐기 예산 전면 방어</li><li><b>비즈니스 기여도(25%):</b> 제안 내용의 기대 가치를 실질적인 예산 보호 화폐 가치 데이터로 환산하여 심사위원 설득력 극대화</li></ul>",
+                badge: "SLIDE_09: METRICS_APPROVED"
+            },
+            10: {
+                category: "V. 실행 계획 및 팀워크 — 배점 10%",
+                title: "향후 개발 마일스톤 및 다단계 현장 전개 계획 (Timeline)",
+                summary: "확산 시나리오: 7월 24일 전 특정 핵심 라인 대상 파일럿(Pilot) 검증",
+                content: "<ul><li><b>단기 계획:</b> 7월 24일 최종 보고서 제출 마감 전, 본 PoC 시스템 프로토타입의 특정 핵심 라인 대상 시범 적용(Pilot) 및 검증 완료</li><li><b>피드백 루프 작동:</b> 시범 운영 중 수집된 현장 작업자 의견 및 UI/UX 터치 영역 오류를 집중 보완하여 완성도 제고</li><li><b>중장기 전사 확산:</b> 다단계 라인별 적용 시나리오 로드맵을 수립하여 단발성 제안이 아닌 지속 가능한 비즈니스 모델로 가시화</li></ul>",
+                badge: "SLIDE_10: ROADMAP_SET"
+            },
+            11: {
+                category: "V. 실행 계획 및 팀워크 — 배점 10%",
+                title: "부문 / 사업장 혼합 조별 팀워크 수행 리포트 (Collaboration)",
+                summary: "직무 시너지: 엔지니어링 스펙 데이터와 HR/EHS 안전 철학의 유기적 결합",
+                content: "<ul><li><b>부서 직무 융합:</b> 엔지니어링의 정밀 부품 데이터 스펙 관리 체계와 HR/EHS 부문의 조직문화 및 현장 안전 인프라의 유기적 결합</li><li><b>시너지 프로세스:</b> 원격 협업 화상 조율 및 각 조원의 직무 전문성에 맞춘 R&R 슬라이드 책임 배분을 통해 팀 생산성 극대화</li><li><b>평가 방어:</b> 혼합 구성의 이점을 완벽히 살려 팀워크 및 발표력(10%) 부문의 감점 리스크를 원천 차단하는 만점 전략 수립</li></ul>",
+                badge: "SLIDE_11: ONE_TEAM_APTIV"
+            },
+            12: {
+                category: "V. 실행 계획 및 팀워크 — 배점 10%",
+                title: "미래 리더로서의 최종 프로젝트 결론 및 제언 (Conclusion)",
+                summary: "최종 제언: 가치 사슬 일치 및 사업장 경계를 넘는 전사 최적화 협업",
+                content: "<ul><li><b>실증형 리더십:</b> 단순 텍스트 아이디어 나열을 넘어 직접 구동 가능한 프로토타입 코드를 통해 제안의 실증 능력 증명</li><li><b>가치 사슬 연동:</b> 전사 디지털 혁신 방향성과 공정 작업 현장의 목소리를 일치시킨 가치 사슬 연계 달성</li><li><b>최종 소언:</b> Aptiv 미래 리더로서 사업장 간, 부서 간 경계를 넘어 전사 최적화 관점의 소통과 협업 DX 과제를 지속 전개할 것임</li></ul>",
+                badge: "SLIDE_12: MISSION_COMPLETED"
+            }
+        };
+
+        function switchSlide(slideNumber) {
+            const buttons = document.querySelectorAll('.menu-btn');
+            buttons.forEach(btn => btn.classList.remove('active'));
+            buttons[slideNumber - 1].classList.add('active');
+
+            const data = slideDatabase[slideNumber];
+
+            document.getElementById('center-summary-text').innerText = data.summary;
+            document.getElementById('slide-category').innerText = data.category;
+            document.getElementById('slide-title').innerText = data.title;
+            document.getElementById('slide-content').innerHTML = data.content;
+            document.getElementById('live-node-text').innerText = data.badge;
+
+            const img = document.getElementById('equipment-image');
+            img.style.transform = 'scale(0.97)';
+            setTimeout(() => {
+                img.style.transform = 'scale(1)';
+            }, 120);
+        }
+
+        window.onload = function() {
+            switchSlide(1);
+        };
+    </script>
+</body>
+</html>
