@@ -7,11 +7,11 @@
     <style>
         /* 1. 디자인 시스템 초기화 및 다크 테마 고유 스펙 */
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', 'Malgun Gothic', sans-serif; }
-        body { background-color: #070a13; color: #f1f5f9; height: 100vh; overflow: hidden; display: flex; flex-direction: column; justify-content: space-between; }
+        body { background-color: #070a13; color: #f1f5f9; min-height: 100vh; display: flex; flex-direction: column; justify-content: space-between; overflow-x: hidden; }
         
         /* 주황색 테크노 그물망 배경 레이어 */
         .grid-bg { 
-            position: absolute; inset: 0; 
+            position: fixed; inset: 0; 
             background-image: radial-gradient(#ff5500 0.5px, transparent 0.5px); 
             background-size: 35px 35px; opacity: 0.12; pointer-events: none; z-index: 0;
         }
@@ -19,95 +19,123 @@
         /* 2. 상단 헤더 영역 */
         header {
             display: flex; justify-content: space-between; align-items: center;
-            padding: 15px 40px; background-color: #0f1422; border-bottom: 1px solid #1e293b; position: relative; z-index: 10;
+            padding: 15px 20px; background-color: #0f1422; border-bottom: 1px solid #1e293b; position: relative; z-index: 10;
         }
-        .brand-logo { color: #ff3b30; font-size: 28px; font-weight: 900; letter-spacing: 3px; text-shadow: 0 0 12px rgba(255,59,48,0.4); }
-        .slogan { font-size: 16px; font-weight: bold; color: #94a3b8; }
-        .status-badge { background-color: #ff3b30; color: white; padding: 5px 14px; border-radius: 20px; font-size: 11px; font-weight: bold; letter-spacing: 1px; }
+        .brand-logo { color: #ff3b30; font-size: 24px; font-weight: 900; letter-spacing: 2px; text-shadow: 0 0 12px rgba(255,59,48,0.4); }
+        .slogan { font-size: 13px; font-weight: bold; color: #94a3b8; display: none; } /* 모바일에서는 숨김 처리하여 공간 확보 */
+        .status-badge { background-color: #ff3b30; color: white; padding: 4px 10px; border-radius: 20px; font-size: 10px; font-weight: bold; letter-spacing: 1px; display: inline-block; }
 
         /* 3. 메인 레이아웃 구역 */
-        .main-container { display: flex; flex: 1; position: relative; z-index: 5; overflow: hidden; }
+        .main-container { display: flex; flex-direction: column; flex: 1; position: relative; z-index: 5; }
 
-        /* [좌측] 거대 반원형 HUD 패널 (유리창 Glassmorphism 효과) */
+        /* [메뉴 서랍 / 모바일 버전: 상단 가로 스크롤 바] */
         aside {
-            width: 380px; height: 100%;
-            background: linear-gradient(180deg, rgba(17, 24, 39, 0.85) 0%, rgba(11, 15, 25, 0.9) 100%);
-            border-radius: 0 450px 450px 0; border-right: 1px solid rgba(255,255,255,0.08);
-            padding: 50px 35px; backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
-            display: flex; flex-direction: column; justify-content: center;
+            width: 100%; background: rgba(17, 24, 39, 0.95);
+            border-bottom: 1px solid rgba(255,255,255,0.08);
+            padding: 12px 15px; backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+            position: sticky; top: 0; z-index: 9;
         }
         
-        /* 스크롤 가능한 내비게이션 메뉴 리스트 */
-        .menu-list { display: flex; flex-direction: column; gap: 7px; overflow-y: auto; max-height: 85vh; padding-right: 5px; width: 100%; }
-        .menu-list::-webkit-scrollbar { width: 4px; }
-        .menu-list::-webkit-scrollbar-thumb { background: #1e293b; border-radius: 10px; }
+        /* 모바일 터치 전용 가로 스크롤 메뉴 리스트 */
+        .menu-list { 
+            display: flex; flex-direction: row; gap: 8px; 
+            overflow-x: auto; overflow-y: hidden; white-space: nowrap; padding-bottom: 5px; 
+            width: 100%; -webkit-overflow-scrolling: touch;
+        }
+        .menu-list::-webkit-scrollbar { height: 4px; }
+        .menu-list::-webkit-scrollbar-thumb { background: #ff3b30; border-radius: 10px; }
         
         .menu-btn {
-            background-color: rgba(20, 27, 45, 0.5); border: 1px solid rgba(255,255,255,0.05);
-            color: #94a3b8; padding: 12px 16px; border-radius: 14px; text-align: left;
-            font-size: 13px; cursor: pointer; transition: all 0.25s ease; display: flex; align-items: center; gap: 10px;
+            background-color: rgba(20, 27, 45, 0.7); border: 1px solid rgba(255,255,255,0.05);
+            color: #94a3b8; padding: 8px 14px; border-radius: 20px; text-align: center;
+            font-size: 12px; cursor: pointer; transition: all 0.2s ease; display: inline-flex; align-items: center; gap: 6px;
+            flex-shrink: 0;
         }
-        .menu-btn:hover { border-color: #38bdf8; color: white; background-color: rgba(56, 189, 248, 0.05); }
+        .menu-btn:hover { border-color: #38bdf8; color: white; }
         .menu-btn.active {
             background: linear-gradient(90deg, #ff3b30 0%, #dd2c22 100%);
             color: white; border-color: #ff3b30; font-weight: bold;
-            transform: scale(1.02); box-shadow: 0 4px 15px rgba(255, 59, 48, 0.3);
+            box-shadow: 0 4px 12px rgba(255, 59, 48, 0.3);
         }
 
-        /* 4. 컨텐츠 배치 시스템 */
-        main { flex: 1; padding: 40px; display: flex; position: relative; gap: 30px; }
+        /* 4. 컨텐츠 배치 시스템 (모바일에서는 세로로 순차 배치) */
+        main { flex: 1; padding: 20px; display: flex; flex-direction: column; position: relative; gap: 20px; }
         
-        /* [중앙 배치] 슬라이드 상세 내용 기입 데이터 보드판 */
+        /* [데이터 보드판] */
         .info-board {
-            flex: 1.1; display: flex; flex-direction: column; justify-content: flex-start;
+            width: 100%; display: flex; flex-direction: column; justify-content: flex-start;
             background: rgba(11, 15, 25, 0.85); border: 1px solid rgba(255,255,255,0.08);
-            border-radius: 24px; padding: 40px; backdrop-filter: blur(10px);
+            border-radius: 16px; padding: 20px; backdrop-filter: blur(10px);
         }
-        .info-header span { font-size: 11px; font-weight: bold; color: #ff3b30; tracking: 2px; text-transform: uppercase; }
-        .info-header h3 { font-size: 24px; font-weight: 900; color: white; margin-top: 5px; line-height: 1.3; border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 15px; }
-        .info-body { margin-top: 25px; font-size: 14.5px; color: #94a3b8; line-height: 1.7; flex: 1; overflow-y: auto; }
+        .info-header span { font-size: 10px; font-weight: bold; color: #ff3b30; letter-spacing: 1px; text-transform: uppercase; }
+        .info-header h3 { font-size: 18px; font-weight: 900; color: white; margin-top: 5px; line-height: 1.4; border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 12px; white-space: normal; word-break: keep-all; }
+        .info-body { margin-top: 15px; font-size: 13.5px; color: #94a3b8; line-height: 1.6; }
         
         /* 보고서 전용 리스트 템플릿 */
         .info-body ul { list-style: none; margin-top: 5px; }
-        .info-body li { margin-bottom: 16px; position: relative; padding-left: 22px; color: #e2e8f0; }
-        .info-body li::before { content: "■"; position: absolute; left: 0; color: #38bdf8; font-size: 10px; top: 4px; }
+        .info-body li { margin-bottom: 12px; position: relative; padding-left: 18px; color: #e2e8f0; white-space: normal; word-break: keep-all; }
+        .info-body li::before { content: "■"; position: absolute; left: 0; color: #38bdf8; font-size: 8px; top: 3px; }
         .info-body b { color: #38bdf8; }
 
-        /* [우측 배치] 대형 설비 이미지 및 핵심 요약 액자 프레임 */
+        /* [우측 배치였던 프레임 -> 모바일 하단 배치] */
         .content-frame {
-            flex: 0.9; background: rgba(15, 20, 34, 0.4); border: 1px solid rgba(255,255,255,0.05);
-            border-radius: 24px; overflow: hidden; display: flex; flex-direction: column; justify-content: center; align-items: center;
-            position: relative; box-shadow: inset 0 0 30px rgba(0,0,0,0.5); padding: 20px;
+            width: 100%; background: rgba(15, 20, 34, 0.4); border: 1px solid rgba(255,255,255,0.05);
+            border-radius: 16px; overflow: hidden; display: flex; flex-direction: column; justify-content: center; align-items: center;
+            position: relative; box-shadow: inset 0 0 20px rgba(0,0,0,0.5); padding: 15px;
         }
-        .content-frame img { max-width: 95%; max-height: 75%; object-fit: contain; border-radius: 12px; transition: all 0.5s ease; }
+        .content-frame img { width: 100%; max-height: 200px; object-fit: contain; border-radius: 8px; transition: all 0.5s ease; }
         
-        /* 우측 프레임 내부 하단 핵심 요약 영역 */
+        /* 프레임 내부 하단 핵심 요약 영역 */
         .center-summary {
-            width: 95%; margin-top: 15px; padding: 15px 20px; background: rgba(7, 10, 19, 0.6); 
-            border: 1px dashed rgba(56, 189, 248, 0.3); border-radius: 14px; text-align: center;
+            width: 100%; margin-top: 12px; padding: 10px 15px; background: rgba(7, 10, 19, 0.6); 
+            border: 1px dashed rgba(56, 189, 248, 0.3); border-radius: 10px; text-align: center;
         }
-        .center-summary p { font-size: 13px; color: #38bdf8; font-weight: bold; letter-spacing: 0.5px; }
+        .center-summary p { font-size: 12px; color: #38bdf8; font-weight: bold; letter-spacing: 0.5px; word-break: keep-all; }
         
         /* 라이브 노드 펄스 배지 */
         .live-badge {
-            position: absolute; top: 20px; left: 20px; display: flex; align-items: center; gap: 8px;
-            background: rgba(0,0,0,0.6); padding: 6px 14px; border-radius: 20px; border: 1px solid rgba(255,255,255,0.1);
+            position: absolute; top: 10px; left: 10px; display: flex; align-items: center; gap: 6px;
+            background: rgba(0,0,0,0.7); padding: 4px 10px; border-radius: 20px; border: 1px solid rgba(255,255,255,0.1);
         }
-        .pulse-dot { width: 8px; height: 8px; background-color: #10b981; border-radius: 50%; animation: pulse 2s infinite; }
+        .pulse-dot { width: 6px; height: 6px; background-color: #10b981; border-radius: 50%; animation: pulse 2s infinite; }
 
         /* 5. 하단 버튼 바 */
         footer {
-            padding: 15px 40px; background-color: #0f1422; border-top: 1px solid #1e293b;
-            display: flex; justify-content: space-between; align-items: center; position: relative; z-10;
+            padding: 15px 20px; background-color: #0f1422; border-top: 1px solid #1e293b;
+            display: flex; flex-direction: column; gap: 10px; justify-content: center; align-items: center; position: relative; z-index: 10;
         }
-        .fav-group { display: flex; gap: 10px; }
+        .fav-group { display: flex; gap: 6px; width: 100%; justify-content: center; overflow-x: auto; }
         .fav-btn {
             background-color: #141b2d; border: 1px solid #1e293b; color: #64748b;
-            padding: 8px 16px; border-radius: 10px; font-size: 12px; font-weight: bold; cursor: pointer; transition: 0.2s;
+            padding: 6px 12px; border-radius: 8px; font-size: 11px; font-weight: bold; cursor: pointer; transition: 0.2s; flex-shrink: 0;
         }
-        .fav-btn:hover { color: white; background-color: #1f293d; border-color: #4b5563; }
+        .fav-btn:hover { color: white; background-color: #1f293d; }
 
         @keyframes pulse { 0% { opacity: 0.4; } 50% { opacity: 1; } 100% { opacity: 0.4; } }
+
+        /* 6. 태블릿 및 데스크톱 스크린 대응용 미디어 쿼리 (화면이 넓어지면 HUD 스타일로 복원) */
+        @media (min-width: 992px) {
+            body { height: 100vh; overflow: hidden; flex-direction: column; }
+            header { padding: 15px 40px; }
+            .brand-logo { font-size: 28px; }
+            .slogan { display: block; }
+            
+            .main-container { flex-direction: row; overflow: hidden; }
+            aside { width: 380px; height: 100%; border-radius: 0 450px 450px 0; border-right: 1px solid rgba(255,255,255,0.08); border-bottom: none; padding: 50px 35px; position: relative; }
+            .menu-list { flex-direction: column; gap: 7px; overflow-y: auto; overflow-x: hidden; white-space: normal; max-height: 85vh; }
+            .menu-btn { width: 100%; text-align: left; font-size: 13px; padding: 12px 16px; border-radius: 14px; }
+            
+            main { flex: 1; padding: 40px; flex-direction: row; gap: 30px; overflow: hidden; }
+            .info-board { flex: 1.1; padding: 40px; height: 100%; }
+            .info-header h3 { font-size: 24px; }
+            .info-body { flex: 1; overflow-y: auto; }
+            .content-frame { flex: 0.9; height: 100%; padding: 20px; }
+            .content-frame img { max-width: 95%; max-height: 75%; }
+            .center-summary p { font-size: 13px; }
+            
+            footer { flex-direction: row; justify-content: space-between; padding: 15px 40px; }
+            .fav-group { width: auto; }
+        }
     </style>
 </head>
 <body>
@@ -125,19 +153,19 @@
 
     <div class="main-container">
         <aside>
-            <div class="menu-list">
+            <div class="menu-list" id="mobile-scroll-container">
                 <button class="menu-btn active" onclick="switchSlide(1)"><span>01</span> 표지 (Title)</button>
-                <button class="menu-btn" onclick="switchSlide(2)"><span>02</span> 디지털 사각지대 (Background)</button>
-                <button class="menu-btn" onclick="switchSlide(3)"><span>03</span> 3대 Pain Point 분석 (Root Cause)</button>
-                <button class="menu-btn" onclick="switchSlide(4)"><span>04</span> 타겟 설비 실태 조사 (Target)</button>
-                <button class="menu-btn" onclick="switchSlide(5)"><span>05</span> 모바일 DX 실행 콘셉트 (Concept)</button>
-                <button class="menu-btn" onclick="switchSlide(6)"><span>06</span> AI-Powered 스마트 기능 (Features)</button>
-                <button class="menu-btn" onclick="switchSlide(7)"><span>07</span> 데이터 동기화 혁신 (Feasibility)</button>
-                <button class="menu-btn" onclick="switchSlide(8)"><span>08</span> 정량/정성 기대효과 (Benefits)</button>
-                <button class="menu-btn" onclick="switchSlide(9)"><span>09</span> 비즈니스 품질 임팩트 (Metrics)</button>
-                <button class="menu-btn" onclick="switchSlide(10)"><span>10</span> 향후 전개 로드맵 (Timeline)</button>
-                <button class="menu-btn" onclick="switchSlide(11)"><span>11</span> 부문 혼합 팀워크 리포트 (Collaboration)</button>
-                <button class="menu-btn" onclick="switchSlide(12)"><span>12</span> 최종 결론 및 제언 (Conclusion)</button>
+                <button class="menu-btn" onclick="switchSlide(2)"><span>02</span> 디지털 사각지대</button>
+                <button class="menu-btn" onclick="switchSlide(3)"><span>03</span> 3대 Pain Point 분석</button>
+                <button class="menu-btn" onclick="switchSlide(4)"><span>04</span> 타겟 설비 실태 조사</button>
+                <button class="menu-btn" onclick="switchSlide(5)"><span>05</span> 모바일 DX 실행 콘셉트</button>
+                <button class="menu-btn" onclick="switchSlide(6)"><span>06</span> AI 스마트 기능</button>
+                <button class="menu-btn" onclick="switchSlide(7)"><span>07</span> 데이터 동기화 혁신</button>
+                <button class="menu-btn" onclick="switchSlide(8)">&nbsp;<span>08</span> 정량/정성 기대효과</button>
+                <button class="menu-btn" onclick="switchSlide(9)"><span>09</span> 비즈니스 품질 임팩트</button>
+                <button class="menu-btn" onclick="switchSlide(10)"><span>10</span> 향후 전개 로드맵</button>
+                <button class="menu-btn" onclick="switchSlide(11)"><span>11</span> 부문 혼합 팀워크</button>
+                <button class="menu-btn" onclick="switchSlide(12)"><span>12</span> 최종 결론 및 제언</button>
             </div>
         </aside>
 
@@ -154,7 +182,7 @@
             </div>
 
             <div class="content-frame">
-                <img id="equipment-image" src="Press.png" alt="Aptiv Core Equipment Asset" onerror="this.src='data:image/svg+xml;utf8,<svg xmlns=\'http://www.w3.org/2000/svg\' width=\'100\' height=\'100\'><rect width=\'100\' height=\'100\' fill=\'%23090d16\'/><text x=\'50%\' y=\'50%\' dominant-baseline=\'middle\' text-anchor=\'middle\' fill=\'%231f2937\' font-family=\'monospace\' font-size=\'10\'>[IMAGE PLACEHOLDER]</text></svg>'">
+                <img id="equipment-image" src="Press.png" alt="Aptiv Core Equipment Asset" onerror="this.src='data:image/svg+xml;utf8,<svg xmlns=\'http://www.w3.org/2000/svg\' width=\'100\' height=\'100\'><rect width=\'100\' height=\'100\' fill=\'%23090d16\'/><text x=\'50%\' y=\'50%\' dominant-baseline=\'middle\' text-anchor=\'middle\' fill=\'%231f2937\' font-family=\'monospace\' font-size=\'10\'>[IMAGE PLACEHOLDER]</text></svg>.'">
                 
                 <div class="center-summary">
                     <p id="center-summary-text">Smart-Aptiv DX PoC 통합 구동 서버 활성화</p>
@@ -162,7 +190,7 @@
 
                 <div class="live-badge">
                     <div class="pulse-dot"></div>
-                    <span id="live-node-text" style="font-size: 10px; font-family: monospace; color: #10b981; font-weight: bold; tracking: 1px;">SYSTEM_LIVE</span>
+                    <span id="live-node-text" style="font-size: 9px; font-family: monospace; color: #10b981; font-weight: bold; tracking: 1px;">SYSTEM_LIVE</span>
                 </div>
             </div>
         </main>
@@ -181,7 +209,7 @@
     </footer>
 
     <script>
-        // PPT 12장 전체 시나리오 데이터베이스 동일하게 유지
+        // PPT 12장 전체 시나리오 데이터베이스
         const slideDatabase = {
             1: {
                 category: "I. 문제 정의 (Problem Definition) — 배점 25%",
@@ -281,6 +309,16 @@
             document.getElementById('slide-title').innerText = data.title;
             document.getElementById('slide-content').innerHTML = data.content;
             document.getElementById('live-node-text').innerText = data.badge;
+
+            // 터치한 메뉴 버튼이 가로 스크롤바 밖으로 잘리지 않도록 자동 스크롤 포커싱
+            const activeBtn = buttons[slideNumber - 1];
+            const container = document.getElementById('mobile-scroll-container');
+            if(window.innerWidth < 992) {
+                container.scrollTo({
+                    left: activeBtn.offsetLeft - 20,
+                    behavior: 'smooth'
+                });
+            }
 
             const img = document.getElementById('equipment-image');
             img.style.transform = 'scale(0.97)';
